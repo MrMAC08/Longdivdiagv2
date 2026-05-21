@@ -34,6 +34,7 @@
         .row-buttons { display: flex; gap: 10px; width: 100%; justify-content: center; }
         button.action { font-size: 1.2rem; padding: 10px 25px; background: #2c3e50; color: white; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; }
         button.skip-btn { font-size: 1.1rem; padding: 10px 20px; background: #e67e22; color: white; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; }
+        button.next-btn { background: #27ae60 !important; font-size: 1.4rem; padding: 12px 35px; }
         button.exit-btn { font-size: 1rem; padding: 8px 18px; background: #c0392b; color: white; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; width: 85%; margin-top: 5px; }
         
         #feedback { margin-top: 12px; min-height: 25px; font-family: sans-serif; font-weight: bold; color: #e67e22; font-size: 1.1rem; }
@@ -111,7 +112,10 @@
 
     document.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && !document.getElementById('math-room').classList.contains('hidden')) {
-            handleStepSubmission();
+            // Prevent enter key when problem is completed and waiting on Next button
+            if (step !== 'COMPLETE') {
+                handleStepSubmission();
+            }
         }
     });
 
@@ -141,6 +145,15 @@
         step = 'D'; col = 0; rem = 0; currentVal = 0; mRes = 0;
         currentWorkingRowElement = null;
         currentRemainderRowElement = null;
+        
+        // Restore buttons back to problem active layout
+        let submitBtn = document.getElementById('submit-btn');
+        submitBtn.className = "action";
+        submitBtn.innerText = "Submit Entry";
+        submitBtn.onclick = handleStepSubmission;
+        
+        document.getElementById('idk-btn').classList.remove('hidden');
+        document.getElementById('user-ans').classList.remove('hidden');
         
         document.getElementById('q-tracker').innerText = `Question ${activeQuestionNum} of ${maxQuestions}`;
         setupTableMatrix();
@@ -337,20 +350,35 @@
     }
 
     function handleProblemCompletion() {
+        step = 'COMPLETE';
         document.querySelectorAll('td').forEach(cell => cell.classList.remove('highlight-target'));
         
         if (errorsOnCurrentProblem === 0) {
             problemsPerfectOnFirstTry++;
         }
 
-        setTimeout(() => {
-            if (activeQuestionNum < maxQuestions) {
-                activeQuestionNum++;
-                generateRandomProblem();
-            } else {
-                finishAssessment();
-            }
-        }, 1500);
+        let fb = document.getElementById('feedback');
+        fb.innerText = "🎉 Wonderful job! Review your complete long division board above.";
+        fb.style.color = "green";
+
+        // Hide numeric text box and IDK shortcut helper while looking over the board
+        document.getElementById('idk-btn').classList.add('hidden');
+        document.getElementById('user-ans').classList.add('hidden');
+
+        // Repurpose action row into the Next Problem gateway button
+        let actionButton = document.getElementById('submit-btn');
+        actionButton.innerText = "Next Problem ➔";
+        actionButton.className = "action next-btn";
+        actionButton.onclick = advanceToNextChallengeRoute;
+    }
+
+    function advanceToNextChallengeRoute() {
+        if (activeQuestionNum < maxQuestions) {
+            activeQuestionNum++;
+            generateRandomProblem();
+        } else {
+            finishAssessment();
+        }
     }
 
     function finishAssessment() {
@@ -358,7 +386,6 @@
         document.getElementById('mini-reset').classList.remove('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
         
-        // REVISED METRIC FORMATTING: Clean 5-question score with missed steps in brackets
         const diagnosticScore = `${problemsPerfectOnFirstTry} / ${maxQuestions} [Missed Steps: ${totalMistakeTally}]`;
         document.getElementById('final-stats').innerText = `Score: ${diagnosticScore}`;
         
@@ -378,7 +405,6 @@
             this.disabled = true;
             this.innerText = "Opening Secure Form...";
 
-            // Keeps your original Google Form layout link
             const finalTargetURL = `https://docs.google.com/forms/d/e/1FAIpQLScObH285PMl_PSdSrzk7WdDYMvxGTWmQcncOWMauTJUzBma3Q/viewform?usp=pp_url&entry.1437711239=${encName}&entry.1698552647=${encProblems}&entry.1610915447=${encScore}&entry.1786501220=${encLog}`;
 
             window.open(finalTargetURL, '_blank');
