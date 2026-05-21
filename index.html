@@ -139,6 +139,8 @@
         problemsServedHistory.push(`${divStr}÷${divisor}`);
 
         step = 'D'; col = 0; rem = 0; currentVal = 0; mRes = 0;
+        currentWorkingRowElement = null;
+        currentRemainderRowElement = null;
         
         document.getElementById('q-tracker').innerText = `Question ${activeQuestionNum} of ${maxQuestions}`;
         setupTableMatrix();
@@ -217,7 +219,6 @@
             expectedTargetValue = currentVal - mRes;
         }
         else if (step === 'B') {
-            // UPDATED: Instead of highlighting the roof, we highlight the empty destination spot down in the work row!
             let targetBringDownDestinationCell = currentRemainderRowElement.cells[(col + 1) + 2];
             targetBringDownDestinationCell.classList.add('highlight-target');
             expectedTargetValue = parseInt(digits[col + 1]);
@@ -324,11 +325,9 @@
             }
         } 
         else if (step === 'B') {
-            // Fill in the destination cell that was just highlighted
             col++;
             currentRemainderRowElement.cells[col + 2].innerText = digits[col];
             
-            // Clear memory references to prep for the next row loop cycle
             currentWorkingRowElement = null;
             currentRemainderRowElement = null;
             step = 'D';
@@ -359,8 +358,9 @@
         document.getElementById('mini-reset').classList.remove('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
         
-        const diagnosticScore = `${problemsPerfectOnFirstTry} / ${maxQuestions} (${totalMistakeTally} mistakes total)`;
-        document.getElementById('final-stats').innerText = `Process Accuracy: ${diagnosticScore}`;
+        // REVISED METRIC FORMATTING: Clean 5-question score with missed steps in brackets
+        const diagnosticScore = `${problemsPerfectOnFirstTry} / ${maxQuestions} [Missed Steps: ${totalMistakeTally}]`;
+        document.getElementById('final-stats').innerText = `Score: ${diagnosticScore}`;
         
         const cleanProblemsServed = problemsServedHistory.join(', ');
         
@@ -378,6 +378,7 @@
             this.disabled = true;
             this.innerText = "Opening Secure Form...";
 
+            // Keeps your original Google Form layout link
             const finalTargetURL = `https://docs.google.com/forms/d/e/1FAIpQLScObH285PMl_PSdSrzk7WdDYMvxGTWmQcncOWMauTJUzBma3Q/viewform?usp=pp_url&entry.1437711239=${encName}&entry.1698552647=${encProblems}&entry.1610915447=${encScore}&entry.1786501220=${encLog}`;
 
             window.open(finalTargetURL, '_blank');
